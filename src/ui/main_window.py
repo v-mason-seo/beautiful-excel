@@ -14,6 +14,7 @@ from ui.settings_panel import SettingsPanel
 from core.excel_loader import ExcelLoader
 from core.exporter import ExcelExporter
 from core.optimizer import ExcelOptimizer
+from core.print_engine import PrintEngine
 
 
 class MainWindow(QMainWindow):
@@ -112,6 +113,21 @@ class MainWindow(QMainWindow):
         clear_action = QAction("모두 지우기(&C)", self)
         clear_action.triggered.connect(self.clear_all)
         edit_menu.addAction(clear_action)
+
+        # 인쇄 메뉴
+        print_menu = menubar.addMenu("인쇄(&P)")
+
+        # 인쇄 미리보기
+        preview_action = QAction("인쇄 미리보기(&V)", self)
+        preview_action.setShortcut("Ctrl+Shift+P")
+        preview_action.triggered.connect(self.print_preview)
+        print_menu.addAction(preview_action)
+
+        # 인쇄
+        print_action = QAction("인쇄(&P)", self)
+        print_action.setShortcut("Ctrl+P")
+        print_action.triggered.connect(self.print_document)
+        print_menu.addAction(print_action)
 
         # 도움말 메뉴
         help_menu = menubar.addMenu("도움말(&H)")
@@ -431,6 +447,71 @@ class MainWindow(QMainWindow):
             return "적용된 최적화가 없습니다."
 
         return "\n".join(summary_parts)
+
+    def print_preview(self):
+        """
+        인쇄 미리보기
+        """
+        # 그리드에서 데이터 가져오기
+        data = self.grid_widget.get_data()
+        headers = self.grid_widget.get_headers()
+
+        # 데이터가 없으면 중단
+        has_data = False
+        for row in data:
+            if any(cell.strip() for cell in row):
+                has_data = True
+                break
+
+        if not has_data:
+            QMessageBox.warning(
+                self,
+                "경고",
+                "인쇄할 데이터가 없습니다."
+            )
+            return
+
+        # 인쇄 엔진 생성 및 미리보기 표시
+        print_engine = PrintEngine(self.settings)
+        print_engine.print_preview(self, data, headers)
+        self.update_status("인쇄 미리보기 완료")
+
+    def print_document(self):
+        """
+        인쇄 다이얼로그 표시 및 인쇄
+        """
+        # 그리드에서 데이터 가져오기
+        data = self.grid_widget.get_data()
+        headers = self.grid_widget.get_headers()
+
+        # 데이터가 없으면 중단
+        has_data = False
+        for row in data:
+            if any(cell.strip() for cell in row):
+                has_data = True
+                break
+
+        if not has_data:
+            QMessageBox.warning(
+                self,
+                "경고",
+                "인쇄할 데이터가 없습니다."
+            )
+            return
+
+        # 인쇄 엔진 생성 및 인쇄 실행
+        print_engine = PrintEngine(self.settings)
+        success = print_engine.print_document(self, data, headers)
+
+        if success:
+            self.update_status("인쇄 완료")
+            QMessageBox.information(
+                self,
+                "완료",
+                "문서를 성공적으로 인쇄했습니다."
+            )
+        else:
+            self.update_status("인쇄 취소")
 
     def show_about(self):
         """

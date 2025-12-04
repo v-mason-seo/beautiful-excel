@@ -24,6 +24,13 @@
 - 🔍 빈 셀 최적화 (헤더 축소, 너비 조정)
 - 💪 컬럼별 공통 텍스트 Bold 처리
 - 📐 헤더 자동 줄바꿈
+- 📏 용지 규격 맞춤 (컬럼 너비 및 행 높이 자동 조정)
+
+### 인쇄 기능
+- ✅ 인쇄 미리보기 (Ctrl+Shift+P)
+- ✅ 인쇄 다이얼로그 (Ctrl+P)
+- ✅ 용지 설정 반영 (A4/A3, 가로/세로, 여백 10mm)
+- ✅ 페이지 분할 자동 처리
 
 ## 설치 방법
 
@@ -80,13 +87,18 @@ beautiful-excel/
 │   ├── core/                # 핵심 로직 모듈
 │   │   ├── __init__.py
 │   │   ├── excel_loader.py  # 엑셀 파일 로드 ✅
-│   │   ├── optimizer.py     # 최적화 엔진 (Phase 4)
-│   │   └── exporter.py      # 엑셀 파일 저장 ✅
+│   │   ├── exporter.py      # 엑셀 파일 저장 ✅
+│   │   ├── optimizer.py     # 최적화 엔진 ✅
+│   │   ├── layout_optimizer.py # 레이아웃 최적화 ✅
+│   │   └── print_engine.py  # 인쇄 엔진 ✅
 │   └── utils/               # 유틸리티 모듈
 │       └── __init__.py
 ├── tests/                   # 테스트 코드
 │   ├── __init__.py
-│   └── test_excel_io.py    # 입출력 테스트 ✅
+│   ├── test_excel_io.py    # 입출력 테스트 ✅
+│   ├── test_optimizer.py   # 최적화 테스트 ✅
+│   ├── test_layout_optimizer.py # 레이아웃 테스트 ✅
+│   └── test_print_manual.py # 인쇄 테스트 ✅
 ├── resources/               # 리소스 파일
 ├── claudedocs/              # 개발 문서
 │   └── development_plan.md
@@ -99,13 +111,13 @@ beautiful-excel/
 ## 개발 일정
 
 - **Phase 1**: 프로젝트 초기 설정 ✅
-- **Phase 2**: GUI 기본 구조 구현
-- **Phase 3**: 데이터 입출력 기능
-- **Phase 4**: 핵심 최적화 로직
-- **Phase 5**: 용지 규격 맞춤 최적화
-- **Phase 6**: 출력 및 미리보기
-- **Phase 7**: 테스트 및 안정화
-- **Phase 8**: 배포 준비
+- **Phase 2**: GUI 기본 구조 구현 ✅
+- **Phase 3**: 데이터 입출력 기능 ✅
+- **Phase 4**: 핵심 최적화 로직 ✅
+- **Phase 5**: 용지 규격 맞춤 최적화 ✅
+- **Phase 6**: 출력 및 미리보기 ✅
+- **Phase 7**: 테스트 및 안정화 (진행 예정)
+- **Phase 8**: 배포 준비 (진행 예정)
 
 ## 기술 스택
 
