@@ -415,6 +415,18 @@ class MainWindow(QMainWindow):
         if header_opt:
             summary_parts.append(f"✓ 헤더 줄바꿈: {len(header_opt)}개 컬럼")
 
+        # 레이아웃 최적화
+        layout_opt = optimization_result.get('layout_optimization', {})
+        if layout_opt:
+            page_breaks = layout_opt.get('page_breaks', {})
+            total_pages = page_breaks.get('total_pages', 1)
+
+            paper_size = self.settings.get('paper_size', 'A4')
+            orientation = '가로' if self.settings.get('orientation') == 'landscape' else '세로'
+
+            summary_parts.append(f"✓ 용지 설정: {paper_size} {orientation}")
+            summary_parts.append(f"✓ 예상 페이지 수: {total_pages}페이지")
+
         if not summary_parts:
             return "적용된 최적화가 없습니다."
 

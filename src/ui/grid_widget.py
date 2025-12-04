@@ -258,6 +258,10 @@ class GridWidget(QTableWidget):
         if 'header_wrap_optimization' in optimization_result:
             self._apply_header_wrap_optimization(optimization_result['header_wrap_optimization'])
 
+        # 5. 레이아웃 최적화 적용
+        if 'layout_optimization' in optimization_result:
+            self._apply_layout_optimization(optimization_result['layout_optimization'])
+
     def _apply_font_optimization(self, font_opt):
         """
         폰트 최적화 적용
@@ -342,3 +346,38 @@ class GridWidget(QTableWidget):
             # 필요시 헤더 높이 조정
             if wrap:
                 self.horizontalHeader().setDefaultSectionSize(60)  # 높이 증가
+
+    def _apply_layout_optimization(self, layout_opt):
+        """
+        레이아웃 최적화 적용
+
+        Args:
+            layout_opt: 레이아웃 최적화 정보
+        """
+        # 1. 컬럼 너비 적용 (mm to pixel 변환)
+        column_widths = layout_opt.get('column_widths', {})
+        for col_idx, width_mm in column_widths.items():
+            # mm를 픽셀로 변환 (96 DPI 기준: 1mm ≈ 3.78 pixels)
+            width_px = int(width_mm * 3.78)
+            self.set_column_width(col_idx, width_px)
+
+        # 2. 행 높이 적용 (mm to pixel 변환)
+        row_heights = layout_opt.get('row_heights', {})
+        for row_idx, height_mm in row_heights.items():
+            # mm를 픽셀로 변환
+            height_px = int(height_mm * 3.78)
+
+            if row_idx == -1:
+                # 헤더 행 높이
+                self.verticalHeader().setDefaultSectionSize(height_px)
+            else:
+                # 데이터 행 높이
+                self.setRowHeight(row_idx, height_px)
+
+        # 3. 페이지 분할 정보 표시 (선택사항)
+        page_breaks = layout_opt.get('page_breaks', {})
+        total_pages = page_breaks.get('total_pages', 1)
+        break_points = page_breaks.get('break_points', [])
+
+        # 페이지 분할 정보를 시각적으로 표시 (추후 확장 가능)
+        # 현재는 로직만 구현하고 실제 표시는 생략
