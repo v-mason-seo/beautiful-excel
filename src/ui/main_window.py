@@ -9,8 +9,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 
-from .grid_widget import GridWidget
-from .settings_panel import SettingsPanel
+from ui.grid_widget import GridWidget
+from ui.settings_panel import SettingsPanel
+from core.excel_loader import ExcelLoader
+from core.exporter import ExcelExporter
+from core.optimizer import ExcelOptimizer
 
 
 class MainWindow(QMainWindow):
@@ -134,19 +137,68 @@ class MainWindow(QMainWindow):
 
     def load_excel_file(self, file_path):
         """
-        엑셀 파일 로드 (Phase 3에서 구현)
+        엑셀 파일 로드
 
         Args:
             file_path: 엑셀 파일 경로
         """
-        self.current_file = file_path
-        self.update_status(f"파일 로드: {file_path}")
-        QMessageBox.information(
-            self,
-            "안내",
-            "엑셀 파일 로드 기능은 Phase 3에서 구현됩니다.\n"
-            f"선택된 파일: {file_path}"
-        )
+        try:
+            self.update_status(f"파일 로드 중: {file_path}")
+
+            # 엑셀 파일 로드
+            result = ExcelLoader.load_file(file_path)
+
+            data = result['data']
+            headers = result['headers']
+            formatting = result['formatting']
+
+            # 그리드에 데이터 설정
+            if data and len(data) > 1:
+                # 첫 행은 헤더로 사용
+                self.grid_widget.set_data(data[1:], headers)
+
+                # 서식 정보 적용
+                self._apply_formatting_to_grid(formatting)
+
+                self.current_file = file_path
+                self.update_status(f"파일 로드 완료: {file_path} ({len(data)-1}행, {len(headers)}열)")
+
+                QMessageBox.information(
+                    self,
+                    "완료",
+                    f"엑셀 파일을 성공적으로 불러왔습니다.\n\n"
+                    f"파일: {file_path}\n"
+                    f"행 수: {len(data)-1}\n"
+                    f"열 수: {len(headers)}"
+                )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "경고",
+                    "엑셀 파일에 데이터가 없습니다."
+                )
+                self.update_status("준비")
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "오류",
+                f"엑셀 파일 로드 실패:\n{str(e)}"
+            )
+            self.update_status("파일 로드 실패")
+
+    def _apply_formatting_to_grid(self, formatting):
+        """
+        로드된 서식 정보를 그리드에 적용
+
+        Args:
+            formatting: 서식 정보 딕셔너리
+        """
+        # 폰트 서식 적용
+        if 'fonts' in formatting:
+            for (row, col), font_info in formatting['fonts'].items():
+                if font_info.get('bold'):
+                    self.grid_widget.set_cell_bold(row, col, True)
 
     def save_file(self):
         """
@@ -173,19 +225,59 @@ class MainWindow(QMainWindow):
 
     def save_excel_file(self, file_path):
         """
-        엑셀 파일 저장 (Phase 3에서 구현)
+        엑셀 파일 저장
 
         Args:
             file_path: 저장할 파일 경로
         """
-        self.current_file = file_path
-        self.update_status(f"파일 저장: {file_path}")
-        QMessageBox.information(
-            self,
-            "안내",
-            "엑셀 파일 저장 기능은 Phase 3에서 구현됩니다.\n"
-            f"저장 경로: {file_path}"
-        )
+        try:
+            self.update_status(f"파일 저장 중: {file_path}")
+
+            # 그리드에서 데이터 가져오기
+            data = self.grid_widget.get_data()
+            headers = self.grid_widget.get_headers()
+
+            # 빈 데이터 체크
+            has_data = False
+            for row in data:
+                if any(cell.strip() for cell in row):
+                    has_data = True
+                    break
+
+            if not has_data:
+                QMessageBox.warning(
+                    self,
+                    "경고",
+                    "저장할 데이터가 없습니다."
+                )
+                self.update_status("준비")
+                return
+
+            # 엑셀 파일로 저장
+            ExcelExporter.save_to_excel(
+                file_path=file_path,
+                data=data,
+                headers=headers,
+                settings=self.settings
+            )
+
+            self.current_file = file_path
+            self.update_status(f"파일 저장 완료: {file_path}")
+
+            QMessageBox.information(
+                self,
+                "완료",
+                f"엑셀 파일을 성공적으로 저장했습니다.\n\n"
+                f"저장 경로: {file_path}"
+            )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "오류",
+                f"엑셀 파일 저장 실패:\n{str(e)}"
+            )
+            self.update_status("파일 저장 실패")
 
     def paste_data(self):
         """
@@ -237,20 +329,96 @@ class MainWindow(QMainWindow):
 
     def apply_optimization(self):
         """
-        최적화 로직 적용 (Phase 4에서 구현)
+        최적화 로직 적용
         """
-        self.update_status("최적화 적용 중...")
-        QMessageBox.information(
-            self,
-            "안내",
-            "최적화 기능은 Phase 4에서 구현됩니다.\n\n"
-            "구현 예정 기능:\n"
-            "- 폰트/크기 일괄 변환\n"
-            "- 빈 셀 최적화\n"
-            "- 공통 텍스트 Bold 처리\n"
-            "- 헤더 자동 줄바꿈"
-        )
-        self.update_status("준비")
+        try:
+            self.update_status("최적화 적용 중...")
+
+            # 그리드에서 데이터 가져오기
+            data = self.grid_widget.get_data()
+            headers = self.grid_widget.get_headers()
+
+            # 데이터가 없으면 중단
+            has_data = False
+            for row in data:
+                if any(cell.strip() for cell in row):
+                    has_data = True
+                    break
+
+            if not has_data:
+                QMessageBox.warning(
+                    self,
+                    "경고",
+                    "최적화할 데이터가 없습니다."
+                )
+                self.update_status("준비")
+                return
+
+            # 최적화 실행
+            optimizer = ExcelOptimizer(self.settings)
+            optimization_result = optimizer.optimize(data, headers)
+
+            # 최적화 결과를 그리드에 적용
+            self.grid_widget.apply_optimization(optimization_result)
+
+            # 최적화 결과 요약
+            summary = self._create_optimization_summary(optimization_result)
+
+            self.update_status("최적화 완료")
+
+            QMessageBox.information(
+                self,
+                "최적화 완료",
+                f"데이터 최적화가 완료되었습니다.\n\n{summary}"
+            )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "오류",
+                f"최적화 실패:\n{str(e)}"
+            )
+            self.update_status("최적화 실패")
+
+    def _create_optimization_summary(self, optimization_result):
+        """
+        최적화 결과 요약 생성
+
+        Args:
+            optimization_result: 최적화 결과
+
+        Returns:
+            str: 요약 메시지
+        """
+        summary_parts = []
+
+        # 폰트 최적화
+        font_opt = optimization_result.get('font_optimization', {})
+        if font_opt.get('apply_to_all_cells'):
+            font_size = font_opt.get('default_font_size', 10)
+            summary_parts.append(f"✓ 폰트 크기: {font_size}pt 일괄 적용")
+
+        # 빈 셀 최적화
+        empty_opt = optimization_result.get('empty_cell_optimization', {})
+        empty_columns = empty_opt.get('empty_columns', {})
+        if empty_columns:
+            summary_parts.append(f"✓ 빈 셀 최적화: {len(empty_columns)}개 컬럼")
+
+        # Bold 최적화
+        bold_opt = optimization_result.get('bold_optimization', {})
+        if bold_opt:
+            total_cells = sum(len(info['affected_rows']) for info in bold_opt.values())
+            summary_parts.append(f"✓ 공통 텍스트 Bold: {total_cells}개 셀")
+
+        # 헤더 줄바꿈
+        header_opt = optimization_result.get('header_wrap_optimization', {})
+        if header_opt:
+            summary_parts.append(f"✓ 헤더 줄바꿈: {len(header_opt)}개 컬럼")
+
+        if not summary_parts:
+            return "적용된 최적화가 없습니다."
+
+        return "\n".join(summary_parts)
 
     def show_about(self):
         """

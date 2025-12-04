@@ -52,35 +52,41 @@ pip install -r requirements.txt
 
 ### 개발 모드
 ```bash
-python src/main.py
+python run.py
+```
+
+### 또는 모듈로 실행
+```bash
+python -m src.main
 ```
 
 ### Windows 실행 파일(.exe) 빌드
 ```bash
-pyinstaller --onefile --windowed --name BeautifulExcel src/main.py
+pyinstaller --onefile --windowed --name BeautifulExcel run.py
 ```
 
 ## 프로젝트 구조
 
 ```
 beautiful-excel/
+├── run.py                   # 실행 진입점 (권장)
 ├── src/
-│   ├── main.py              # 프로그램 진입점
+│   ├── main.py              # 메인 애플리케이션
 │   ├── ui/                  # GUI 관련 모듈
 │   │   ├── __init__.py
 │   │   ├── main_window.py   # 메인 윈도우
-│   │   ├── menu_bar.py      # 메뉴바
+│   │   ├── settings_panel.py # 설정 패널
 │   │   └── grid_widget.py   # 그리드 위젯
 │   ├── core/                # 핵심 로직 모듈
 │   │   ├── __init__.py
-│   │   ├── excel_loader.py  # 엑셀 파일 로드
-│   │   ├── optimizer.py     # 최적화 엔진
-│   │   └── exporter.py      # 엑셀 파일 저장
+│   │   ├── excel_loader.py  # 엑셀 파일 로드 ✅
+│   │   ├── optimizer.py     # 최적화 엔진 (Phase 4)
+│   │   └── exporter.py      # 엑셀 파일 저장 ✅
 │   └── utils/               # 유틸리티 모듈
-│       ├── __init__.py
-│       └── helpers.py       # 헬퍼 함수
+│       └── __init__.py
 ├── tests/                   # 테스트 코드
-│   └── __init__.py
+│   ├── __init__.py
+│   └── test_excel_io.py    # 입출력 테스트 ✅
 ├── resources/               # 리소스 파일
 ├── claudedocs/              # 개발 문서
 │   └── development_plan.md

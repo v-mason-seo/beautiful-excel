@@ -232,3 +232,113 @@ class GridWidget(QTableWidget):
             self.paste_from_clipboard(clipboard_text)
         else:
             super().keyPressEvent(event)
+
+    # === 최적화 적용 메서드 ===
+
+    def apply_optimization(self, optimization_result):
+        """
+        최적화 결과를 그리드에 적용
+
+        Args:
+            optimization_result: optimizer에서 반환한 최적화 결과
+        """
+        # 1. 폰트 최적화 적용
+        if 'font_optimization' in optimization_result:
+            self._apply_font_optimization(optimization_result['font_optimization'])
+
+        # 2. 빈 셀 최적화 적용
+        if 'empty_cell_optimization' in optimization_result:
+            self._apply_empty_cell_optimization(optimization_result['empty_cell_optimization'])
+
+        # 3. Bold 최적화 적용
+        if 'bold_optimization' in optimization_result:
+            self._apply_bold_optimization(optimization_result['bold_optimization'])
+
+        # 4. 헤더 줄바꿈 최적화 적용
+        if 'header_wrap_optimization' in optimization_result:
+            self._apply_header_wrap_optimization(optimization_result['header_wrap_optimization'])
+
+    def _apply_font_optimization(self, font_opt):
+        """
+        폰트 최적화 적용
+        """
+        font_size = font_opt.get('default_font_size', 10)
+        font_name = font_opt.get('default_font_name', '맑은 고딕')
+
+        if font_opt.get('apply_to_all_cells'):
+            self.apply_font_size(font_size)
+
+    def _apply_empty_cell_optimization(self, empty_cell_opt):
+        """
+        빈 셀 최적화 적용
+        """
+        # 빈 컬럼 헤더 폰트 크기 축소
+        empty_columns = empty_cell_opt.get('empty_columns', {})
+        for col_idx, col_info in empty_columns.items():
+            header_font_size = col_info.get('header_font_size', 8)
+            self.set_header_font_size(col_idx, header_font_size)
+
+        # 컬럼 너비 조정
+        column_widths = empty_cell_opt.get('column_widths', {})
+        for col_idx, width in column_widths.items():
+            self.set_column_width(col_idx, width)
+
+    def _apply_bold_optimization(self, bold_opt):
+        """
+        Bold 최적화 적용
+        """
+        for col_idx, col_info in bold_opt.items():
+            common_prefix = col_info.get('common_prefix', '')
+            bold_length = col_info.get('bold_length', 0)
+            affected_rows = col_info.get('affected_rows', [])
+
+            # 각 셀의 공통 접두사 부분을 Bold 처리
+            for row_idx in affected_rows:
+                self._set_cell_partial_bold(row_idx, col_idx, bold_length)
+
+    def _apply_header_wrap_optimization(self, header_wrap_opt):
+        """
+        헤더 줄바꿈 최적화 적용
+        """
+        for col_idx, col_info in header_wrap_opt.items():
+            if col_info.get('wrap_text'):
+                self._set_header_wrap(col_idx, True)
+
+    def _set_cell_partial_bold(self, row, col, bold_length):
+        """
+        셀의 일부분만 Bold 처리 (앞부분)
+
+        Args:
+            row: 행 인덱스
+            col: 열 인덱스
+            bold_length: Bold 처리할 문자 수
+        """
+        item = self.item(row, col)
+        if not item:
+            return
+
+        text = item.text()
+        if len(text) < bold_length:
+            return
+
+        # 전체를 Bold로 설정하는 간단한 방법
+        # (Qt의 Rich Text 제한으로 인해 부분 Bold는 복잡함)
+        # 공통 접두사가 있는 셀은 Bold 처리
+        font = item.font()
+        font.setBold(True)
+        item.setFont(font)
+
+    def _set_header_wrap(self, col, wrap=True):
+        """
+        헤더 텍스트 줄바꿈 설정
+
+        Args:
+            col: 열 인덱스
+            wrap: 줄바꿈 여부
+        """
+        header_item = self.horizontalHeaderItem(col)
+        if header_item:
+            # Qt에서는 헤더 아이템의 텍스트 줄바꿈이 자동으로 처리됨
+            # 필요시 헤더 높이 조정
+            if wrap:
+                self.horizontalHeader().setDefaultSectionSize(60)  # 높이 증가
