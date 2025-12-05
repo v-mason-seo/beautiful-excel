@@ -4,7 +4,11 @@
 
 from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QHeaderView
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QBrush, QColor
+
+# 헤더 스타일 상수
+HEADER_BG_COLOR = QColor(200, 220, 240)  # 연한 파란색 배경
+HEADER_FONT_BOLD = True
 
 
 class GridWidget(QTableWidget):
@@ -69,6 +73,9 @@ class GridWidget(QTableWidget):
                 item = QTableWidgetItem(str(cell_value) if cell_value is not None else "")
                 self.setItem(row_idx, col_idx, item)
 
+        # 첫 번째 행(헤더)에 스타일 적용
+        self.apply_header_row_style()
+
         # 컬럼 너비 자동 조정
         self.resizeColumnsToContents()
 
@@ -101,6 +108,48 @@ class GridWidget(QTableWidget):
             headers.append(header_item.text() if header_item else f"Column {col + 1}")
         return headers
 
+    def get_formatting(self):
+        """
+        그리드의 서식 정보 가져오기
+
+        Returns:
+            dict: {
+                'fonts': {(row, col): {'bold': bool, 'size': int, 'name': str}},
+                'colors': {(row, col): {'bg_color': str}}
+            }
+        """
+        formatting = {
+            'fonts': {},
+            'colors': {}
+        }
+
+        for row in range(self.rowCount()):
+            for col in range(self.columnCount()):
+                item = self.item(row, col)
+                if not item:
+                    continue
+
+                # 폰트 정보 추출
+                font = item.font()
+                if font.bold():
+                    formatting['fonts'][(row, col)] = {
+                        'bold': True,
+                        'size': font.pointSize() if font.pointSize() > 0 else 10,
+                        'name': font.family() if font.family() else '맑은 고딕'
+                    }
+
+                # 배경색 정보 추출
+                bg_brush = item.background()
+                if bg_brush.style() != 0:  # 0 = NoBrush (투명)
+                    color = bg_brush.color()
+                    # RGB를 HEX로 변환
+                    hex_color = f"{color.red():02X}{color.green():02X}{color.blue():02X}"
+                    formatting['colors'][(row, col)] = {
+                        'bg_color': hex_color
+                    }
+
+        return formatting
+
     def clear_all(self):
         """
         그리드의 모든 데이터 삭제
@@ -108,6 +157,28 @@ class GridWidget(QTableWidget):
         self.clearContents()
         self.setRowCount(20)
         self.setColumnCount(10)
+
+    def apply_header_row_style(self):
+        """
+        첫 번째 행(헤더)에 스타일 적용
+        - 배경색: 연한 파란색
+        - 폰트: Bold
+        """
+        if self.rowCount() == 0:
+            return
+
+        header_brush = QBrush(HEADER_BG_COLOR)
+
+        for col in range(self.columnCount()):
+            item = self.item(0, col)
+            if item:
+                # 배경색 적용
+                item.setBackground(header_brush)
+                # Bold 폰트 적용
+                if HEADER_FONT_BOLD:
+                    font = item.font()
+                    font.setBold(True)
+                    item.setFont(font)
 
     def apply_font_size(self, font_size):
         """
@@ -213,13 +284,19 @@ class GridWidget(QTableWidget):
         if required_cols > self.columnCount():
             self.setColumnCount(required_cols)
 
-        # 데이터 삽입
+        # 데이터 삽입 (Consolas 폰트 적용)
+        paste_font = QFont("Consolas", 10)
         for row_offset, row_data in enumerate(rows_data):
             for col_offset, cell_value in enumerate(row_data):
                 row_idx = current_row + row_offset
                 col_idx = current_col + col_offset
                 item = QTableWidgetItem(cell_value.strip())
+                item.setFont(paste_font)
                 self.setItem(row_idx, col_idx, item)
+
+        # 첫 번째 행(헤더)에 스타일 적용
+        if current_row == 0:
+            self.apply_header_row_style()
 
     def keyPressEvent(self, event):
         """
@@ -274,18 +351,47 @@ class GridWidget(QTableWidget):
 
     def _apply_empty_cell_optimization(self, empty_cell_opt):
         """
-        빈 셀 최적화 적용
+        빈 컬럼 최적화 적용 (데이터가 없는 컬럼)
+        - 헤더를 여러 줄로 표시
+        - 행 높이 자동 조정
+        - 컬럼 너비 최소화
+        - 헤더 제외 셀 배경색 제거
         """
-        # 빈 컬럼 헤더 폰트 크기 축소
         empty_columns = empty_cell_opt.get('empty_columns', {})
+        max_lines = 1  # 최대 줄 수 추적
+
         for col_idx, col_info in empty_columns.items():
-            header_font_size = col_info.get('header_font_size', 8)
-            self.set_header_font_size(col_idx, header_font_size)
+            if col_info.get('is_empty'):
+                # 줄바꿈된 헤더 텍스트 가져오기
+                wrapped_header = col_info.get('header_wrap', '')
+
+                # 첫 번째 행(헤더)의 셀에 줄바꿈된 텍스트 적용
+                header_item = self.item(0, col_idx)
+                if header_item:
+                    header_item.setText(wrapped_header)
+                    # 텍스트 정렬 설정 (중앙 정렬)
+                    header_item.setTextAlignment(Qt.AlignCenter)
+
+                # 줄 수 계산
+                line_count = wrapped_header.count('\n') + 1
+                max_lines = max(max_lines, line_count)
+
+                # 헤더 제외한 셀 배경색 제거 (채우기 없음)
+                for row_idx in range(1, self.rowCount()):
+                    cell_item = self.item(row_idx, col_idx)
+                    if cell_item:
+                        cell_item.setBackground(QBrush())  # 채우기 없음
 
         # 컬럼 너비 조정
         column_widths = empty_cell_opt.get('column_widths', {})
         for col_idx, width in column_widths.items():
             self.set_column_width(col_idx, width)
+
+        # 첫 번째 행(헤더) 높이 조정 - 줄바꿈된 텍스트에 맞게
+        if max_lines > 1:
+            base_height = 25  # 기본 행 높이 (픽셀)
+            new_height = base_height * max_lines
+            self.setRowHeight(0, new_height)
 
     def _apply_bold_optimization(self, bold_opt):
         """

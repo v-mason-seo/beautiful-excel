@@ -107,15 +107,15 @@ class ExcelOptimizer:
         headers: List[str]
     ) -> Dict[str, Any]:
         """
-        빈 셀 최적화
+        빈 컬럼 최적화 (헤더를 제외한 데이터가 모두 비어있는 컬럼)
 
         Args:
-            data: 데이터 리스트
+            data: 데이터 리스트 (첫 번째 행이 헤더)
             headers: 헤더 리스트
 
         Returns:
             dict: {
-                'empty_columns': {컬럼_인덱스: {'empty_ratio': 비율, 'header_font_size': 크기}},
+                'empty_columns': {컬럼_인덱스: {'is_empty': bool, 'header_wrap': 줄바꿈된 헤더}},
                 'column_widths': {컬럼_인덱스: 너비}
             }
         """
@@ -127,23 +127,25 @@ class ExcelOptimizer:
         column_widths = {}
 
         for col_idx in range(num_columns):
-            # 빈 셀 비율 계산
-            empty_ratio = self._calculate_empty_ratio(data, col_idx)
+            # 헤더를 제외한 데이터가 모두 비어있는지 확인
+            is_column_empty = self._is_column_data_empty(data, col_idx)
 
-            # 빈 셀이 50% 이상인 경우 최적화 적용
-            if empty_ratio >= 0.5:
-                # 헤더 폰트 크기 축소 (기본 크기에서 2pt 감소, 최소 8pt)
-                default_font_size = self.settings.get('font_size', 10)
-                reduced_font_size = max(default_font_size - 2, 8)
+            if is_column_empty:
+                # 헤더 텍스트 가져오기
+                header_text = headers[col_idx] if col_idx < len(headers) else ''
+
+                # 헤더를 여러 줄로 변환 (2~3글자마다 줄바꿈)
+                wrapped_header = self._wrap_header_text(header_text, max_chars_per_line=3)
 
                 empty_columns[col_idx] = {
-                    'empty_ratio': empty_ratio,
-                    'header_font_size': reduced_font_size,
-                    'reason': f'빈 셀 {empty_ratio*100:.1f}%'
+                    'is_empty': True,
+                    'header_wrap': wrapped_header,
+                    'original_header': header_text,
+                    'reason': '데이터 없음'
                 }
 
                 # 컬럼 너비 최소화 (픽셀 단위)
-                column_widths[col_idx] = 60  # 최소 너비
+                column_widths[col_idx] = 40  # 최소 너비
             else:
                 # 데이터 길이 기반 너비 계산
                 max_length = self._get_column_max_length(data, col_idx)
@@ -253,32 +255,49 @@ class ExcelOptimizer:
     # === 유틸리티 메서드 ===
 
     @staticmethod
-    def _calculate_empty_ratio(data: List[List[str]], col_index: int) -> float:
+    def _is_column_data_empty(data: List[List[str]], col_index: int) -> bool:
         """
-        컬럼의 빈 셀 비율 계산
+        컬럼의 데이터가 모두 비어있는지 확인 (첫 번째 행 = 헤더 제외)
 
         Args:
-            data: 데이터 리스트
+            data: 데이터 리스트 (첫 번째 행이 헤더)
             col_index: 컬럼 인덱스
 
         Returns:
-            float: 빈 셀 비율 (0.0 ~ 1.0)
+            bool: 모든 데이터가 비어있으면 True
         """
-        if not data:
-            return 0.0
+        if not data or len(data) <= 1:
+            return True  # 헤더만 있으면 비어있는 것으로 간주
 
-        total = len(data)
-        empty = 0
-
-        for row in data:
+        # 첫 번째 행(헤더)을 제외한 나머지 데이터 확인
+        for row in data[1:]:
             if col_index < len(row):
                 cell_value = row[col_index]
-                if not cell_value or str(cell_value).strip() == "":
-                    empty += 1
-            else:
-                empty += 1
+                if cell_value and str(cell_value).strip() != "":
+                    return False  # 데이터가 하나라도 있으면 비어있지 않음
 
-        return empty / total if total > 0 else 0.0
+        return True
+
+    @staticmethod
+    def _wrap_header_text(header_text: str, max_chars_per_line: int = 3) -> str:
+        """
+        헤더 텍스트를 여러 줄로 줄바꿈
+
+        Args:
+            header_text: 원본 헤더 텍스트
+            max_chars_per_line: 한 줄당 최대 글자 수
+
+        Returns:
+            str: 줄바꿈된 헤더 텍스트
+        """
+        if not header_text or len(header_text) <= max_chars_per_line:
+            return header_text
+
+        lines = []
+        for i in range(0, len(header_text), max_chars_per_line):
+            lines.append(header_text[i:i + max_chars_per_line])
+
+        return '\n'.join(lines)
 
     @staticmethod
     def _get_column_max_length(data: List[List[str]], col_index: int) -> int:

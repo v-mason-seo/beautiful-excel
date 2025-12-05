@@ -133,18 +133,28 @@ class PrintEngine:
             return
 
         painter = QPainter()
-        painter.begin(printer)
+        if not painter.begin(printer):
+            return
 
         try:
-            # 폰트 설정
+            # 폰트 설정 - 고해상도 프린터에서 적절한 크기로 스케일링
             font_size = self.settings.get('font_size', 10)
-            font = QFont("맑은 고딕", font_size)
+            
+            # 프린터 해상도에 맞게 폰트 크기 조정
+            resolution = printer.resolution()
+            scaled_font_size = int(font_size * resolution / 96)  # 96 DPI 기준 스케일링
+            
+            font = QFont("맑은 고딕", scaled_font_size)
             painter.setFont(font)
 
-            # 페이지 영역 계산
-            page_rect = printer.pageRect(QPrinter.DevicePixel)
+            # 페이지 영역 계산 (Point 단위 사용)
+            page_rect = printer.pageRect(QPrinter.Point)
             content_width = page_rect.width()
             content_height = page_rect.height()
+            
+            # 시작 오프셋
+            start_x = page_rect.x()
+            start_y = page_rect.y()
 
             # 컬럼 너비 계산
             num_columns = len(headers)
@@ -152,18 +162,18 @@ class PrintEngine:
 
             # 행 높이 계산
             font_metrics = painter.fontMetrics()
-            row_height = font_metrics.height() * 1.5
+            row_height = font_metrics.height() * 1.8
 
             # 현재 Y 위치
-            current_y = 0
+            current_y = start_y
 
             # 헤더 그리기
-            header_font = QFont("맑은 고딕", font_size, QFont.Bold)
+            header_font = QFont("맑은 고딕", scaled_font_size, QFont.Bold)
             painter.setFont(header_font)
-            painter.setPen(QPen(QColor(0, 0, 0)))
+            painter.setPen(QPen(QColor(0, 0, 0), 1))
 
             for col_idx, header in enumerate(headers):
-                x = col_idx * column_width
+                x = start_x + col_idx * column_width
                 rect = QRectF(x, current_y, column_width, row_height)
                 painter.drawRect(rect)
                 painter.drawText(
@@ -175,19 +185,19 @@ class PrintEngine:
             current_y += row_height
 
             # 데이터 그리기
-            data_font = QFont("맑은 고딕", font_size)
+            data_font = QFont("맑은 고딕", scaled_font_size)
             painter.setFont(data_font)
 
             for row_idx, row_data in enumerate(data):
                 # 페이지 넘침 확인
-                if current_y + row_height > content_height:
+                if current_y + row_height > start_y + content_height:
                     printer.newPage()
-                    current_y = 0
+                    current_y = start_y
 
                     # 새 페이지에 헤더 다시 그리기
                     painter.setFont(header_font)
                     for col_idx, header in enumerate(headers):
-                        x = col_idx * column_width
+                        x = start_x + col_idx * column_width
                         rect = QRectF(x, current_y, column_width, row_height)
                         painter.drawRect(rect)
                         painter.drawText(
@@ -200,14 +210,15 @@ class PrintEngine:
 
                 # 데이터 셀 그리기
                 for col_idx, cell_value in enumerate(row_data):
-                    x = col_idx * column_width
-                    rect = QRectF(x, current_y, column_width, row_height)
-                    painter.drawRect(rect)
-                    painter.drawText(
-                        rect,
-                        Qt.AlignLeft | Qt.AlignVCenter | Qt.TextWordWrap,
-                        str(cell_value) if cell_value else ""
-                    )
+                    if col_idx < num_columns:  # 컬럼 범위 확인
+                        x = start_x + col_idx * column_width
+                        rect = QRectF(x, current_y, column_width, row_height)
+                        painter.drawRect(rect)
+                        painter.drawText(
+                            rect,
+                            Qt.AlignLeft | Qt.AlignVCenter | Qt.TextWordWrap,
+                            str(cell_value) if cell_value else ""
+                        )
 
                 current_y += row_height
 

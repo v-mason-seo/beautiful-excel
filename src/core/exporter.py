@@ -84,18 +84,35 @@ class ExcelExporter:
                     cell = ws.cell(row=row_idx, column=col_idx)
                     cell.value = cell_value
 
-                    # 기본 폰트 적용
-                    cell.font = Font(
-                        name=default_font_name,
-                        size=default_font_size
-                    )
-
-                    # 텍스트 정렬
-                    cell.alignment = Alignment(
-                        horizontal='left',
-                        vertical='center',
-                        wrap_text=False
-                    )
+                    # 첫 번째 행(헤더)에 스타일 적용
+                    if row_idx == data_start_row:
+                        cell.font = Font(
+                            name=default_font_name,
+                            size=default_font_size,
+                            bold=True
+                        )
+                        cell.alignment = Alignment(
+                            horizontal='center',
+                            vertical='center',
+                            wrap_text=True
+                        )
+                        # 헤더 배경색 (연한 파란색 - RGB(200, 220, 240) = C8DCF0)
+                        cell.fill = PatternFill(
+                            start_color='C8DCF0',
+                            end_color='C8DCF0',
+                            fill_type='solid'
+                        )
+                    else:
+                        # 일반 데이터 셀
+                        cell.font = Font(
+                            name=default_font_name,
+                            size=default_font_size
+                        )
+                        cell.alignment = Alignment(
+                            horizontal='left',
+                            vertical='center',
+                            wrap_text=False
+                        )
 
             # 서식 정보 적용 (있는 경우)
             if formatting:

@@ -4,7 +4,7 @@
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QMenuBar,
-    QMenu, QFileDialog, QMessageBox, QStatusBar
+    QMenu, QFileDialog, QMessageBox, QStatusBar, QToolBar
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
@@ -60,6 +60,9 @@ class MainWindow(QMainWindow):
         # 메뉴바 생성
         self.create_menu_bar()
 
+        # 툴바 생성
+        self.create_toolbar()
+
         # 상태바
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
@@ -114,21 +117,6 @@ class MainWindow(QMainWindow):
         clear_action.triggered.connect(self.clear_all)
         edit_menu.addAction(clear_action)
 
-        # 인쇄 메뉴
-        print_menu = menubar.addMenu("인쇄(&P)")
-
-        # 인쇄 미리보기
-        preview_action = QAction("인쇄 미리보기(&V)", self)
-        preview_action.setShortcut("Ctrl+Shift+P")
-        preview_action.triggered.connect(self.print_preview)
-        print_menu.addAction(preview_action)
-
-        # 인쇄
-        print_action = QAction("인쇄(&P)", self)
-        print_action.setShortcut("Ctrl+P")
-        print_action.triggered.connect(self.print_document)
-        print_menu.addAction(print_action)
-
         # 도움말 메뉴
         help_menu = menubar.addMenu("도움말(&H)")
 
@@ -136,6 +124,66 @@ class MainWindow(QMainWindow):
         about_action = QAction("프로그램 정보(&A)", self)
         about_action.triggered.connect(self.show_about)
         help_menu.addAction(about_action)
+
+    def create_toolbar(self):
+        """
+        툴바 생성 - 주요 기능 버튼 배치
+        """
+        toolbar = QToolBar("메인 툴바")
+        toolbar.setMovable(False)
+        self.addToolBar(toolbar)
+
+        # 파일 열기
+        open_action = QAction("열기", self)
+        open_action.setShortcut("Ctrl+O")
+        open_action.setToolTip("엑셀 파일 열기 (Ctrl+O)")
+        open_action.triggered.connect(self.open_file)
+        toolbar.addAction(open_action)
+
+        # 저장
+        save_action = QAction("저장", self)
+        save_action.setShortcut("Ctrl+S")
+        save_action.setToolTip("파일 저장 (Ctrl+S)")
+        save_action.triggered.connect(self.save_file)
+        toolbar.addAction(save_action)
+
+        # 다른 이름으로 저장
+        save_as_action = QAction("다른 이름으로 저장", self)
+        save_as_action.setShortcut("Ctrl+Shift+S")
+        save_as_action.setToolTip("다른 이름으로 저장 (Ctrl+Shift+S)")
+        save_as_action.triggered.connect(self.save_file_as)
+        toolbar.addAction(save_as_action)
+
+        toolbar.addSeparator()
+
+        # 붙여넣기
+        paste_action = QAction("붙여넣기", self)
+        paste_action.setShortcut("Ctrl+V")
+        paste_action.setToolTip("클립보드 데이터 붙여넣기 (Ctrl+V)")
+        paste_action.triggered.connect(self.paste_data)
+        toolbar.addAction(paste_action)
+
+        # 모두 지우기
+        clear_action = QAction("모두 지우기", self)
+        clear_action.setToolTip("그리드 데이터 모두 삭제")
+        clear_action.triggered.connect(self.clear_all)
+        toolbar.addAction(clear_action)
+
+        toolbar.addSeparator()
+
+        # 인쇄 미리보기
+        preview_action = QAction("인쇄 미리보기", self)
+        preview_action.setShortcut("Ctrl+Shift+P")
+        preview_action.setToolTip("인쇄 미리보기 (Ctrl+Shift+P)")
+        preview_action.triggered.connect(self.print_preview)
+        toolbar.addAction(preview_action)
+
+        # 인쇄
+        print_action = QAction("인쇄", self)
+        print_action.setShortcut("Ctrl+P")
+        print_action.setToolTip("인쇄 (Ctrl+P)")
+        print_action.triggered.connect(self.print_document)
+        toolbar.addAction(print_action)
 
     def open_file(self):
         """
@@ -251,7 +299,7 @@ class MainWindow(QMainWindow):
 
             # 그리드에서 데이터 가져오기
             data = self.grid_widget.get_data()
-            headers = self.grid_widget.get_headers()
+            formatting = self.grid_widget.get_formatting()
 
             # 빈 데이터 체크
             has_data = False
@@ -269,11 +317,12 @@ class MainWindow(QMainWindow):
                 self.update_status("준비")
                 return
 
-            # 엑셀 파일로 저장
+            # 엑셀 파일로 저장 (첫 번째 행이 헤더로 처리됨)
             ExcelExporter.save_to_excel(
                 file_path=file_path,
                 data=data,
-                headers=headers,
+                headers=None,  # 데이터의 첫 번째 행을 헤더로 사용
+                formatting=formatting,  # 서식 정보 전달
                 settings=self.settings
             )
 
@@ -352,7 +401,6 @@ class MainWindow(QMainWindow):
 
             # 그리드에서 데이터 가져오기
             data = self.grid_widget.get_data()
-            headers = self.grid_widget.get_headers()
 
             # 데이터가 없으면 중단
             has_data = False
@@ -369,6 +417,9 @@ class MainWindow(QMainWindow):
                 )
                 self.update_status("준비")
                 return
+
+            # 데이터의 첫 번째 행을 헤더로 사용
+            headers = data[0] if data else []
 
             # 최적화 실행
             optimizer = ExcelOptimizer(self.settings)

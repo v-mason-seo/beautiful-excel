@@ -101,11 +101,12 @@
 - [x] 모든 데이터 셀에 폰트 크기 일괄 적용
 - [x] 기본 글꼴 설정 (맑은 고딕)
 
-#### 4.2 빈 셀 최적화
-- [x] 각 컬럼별 빈 셀 비율 계산
-- [x] 빈 셀이 많은 컬럼 식별 (50% 이상)
-- [x] 해당 컬럼의 헤더 글자 크기 축소 (최소 8pt)
-- [x] 컬럼 너비 최소화 (최소 60px)
+#### 4.2 빈 컬럼 최적화
+- [x] 헤더를 제외한 데이터가 모두 비어있는 컬럼 식별
+- [x] 해당 컬럼의 헤더를 여러 줄로 표시 (3글자마다 줄바꿈)
+- [x] 헤더 행 높이 자동 조정 (줄 수에 맞게)
+- [x] 컬럼 너비 최소화 (40px)
+- [x] 헤더 제외 셀 배경색 제거 (채우기 없음)
 
 #### 4.3 컬럼별 공통 텍스트 Bold 처리
 - [x] 각 컬럼별 데이터 수집
@@ -259,15 +260,34 @@ def find_common_prefix(strings):
     return common
 ```
 
-### 2. 빈 셀 비율 계산
+### 2. 빈 컬럼 판별 및 헤더 줄바꿈
 ```python
-def calculate_empty_ratio(column_data):
+def is_column_data_empty(data, col_index):
     """
-    컬럼의 빈 셀 비율 계산 (헤더 제외)
+    컬럼의 데이터가 모두 비어있는지 확인 (첫 번째 행 = 헤더 제외)
     """
-    total = len(column_data) - 1  # 헤더 제외
-    empty = sum(1 for cell in column_data[1:] if not cell or str(cell).strip() == "")
-    return empty / total if total > 0 else 0
+    if not data or len(data) <= 1:
+        return True
+    
+    for row in data[1:]:
+        if col_index < len(row):
+            cell_value = row[col_index]
+            if cell_value and str(cell_value).strip() != "":
+                return False
+    return True
+
+def wrap_header_text(header_text, max_chars_per_line=3):
+    """
+    헤더 텍스트를 여러 줄로 줄바꿈
+    """
+    if not header_text or len(header_text) <= max_chars_per_line:
+        return header_text
+    
+    lines = []
+    for i in range(0, len(header_text), max_chars_per_line):
+        lines.append(header_text[i:i + max_chars_per_line])
+    
+    return '\n'.join(lines)
 ```
 
 ### 3. 컬럼 너비 최적화
@@ -326,7 +346,7 @@ def optimize_column_widths(data, paper_width, font_size):
 - [ ] 클립보드 데이터를 정상적으로 붙여넣을 수 있음
 - [ ] 설정된 용지 크기(A4/A3)와 방향에 맞춰 레이아웃이 최적화됨
 - [ ] 글자 크기가 설정값대로 일괄 변경됨
-- [ ] 빈 셀이 많은 컬럼의 너비가 자동으로 축소됨
+- [ ] 빈 컬럼(데이터 없는 컬럼)의 헤더가 여러 줄로 표시되고 너비가 최소화됨
 - [ ] 컬럼별 공통 텍스트가 Bold 처리됨
 - [ ] 긴 헤더가 자동으로 줄바꿈됨
 - [ ] 최적화된 데이터를 엑셀 파일로 저장할 수 있음
@@ -364,5 +384,5 @@ def optimize_column_widths(data, paper_width, font_size):
 ---
 
 **작성일**: 2025-12-03
-**최종 업데이트**: 2025-12-04 (Phase 6 완료)
+**최종 업데이트**: 2025-12-05 (빈 컬럼 최적화 개선)
 **작성자**: Claude Code
