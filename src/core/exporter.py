@@ -114,6 +114,8 @@ class ExcelExporter:
                         cell.border = dark_gray_border
                     else:
                         # 일반 데이터 셀
+                        # 줄바꿈 문자가 있으면 wrap_text=True
+                        has_newline = '\n' in str(cell_value) if cell_value else False
                         cell.font = Font(
                             name=default_font_name,
                             size=default_font_size
@@ -121,7 +123,7 @@ class ExcelExporter:
                         cell.alignment = Alignment(
                             horizontal='left',
                             vertical='center',
-                            wrap_text=False
+                            wrap_text=has_newline
                         )
                         # 테두리 적용
                         cell.border = dark_gray_border
@@ -130,8 +132,13 @@ class ExcelExporter:
             if formatting:
                 ExcelExporter._apply_formatting(ws, formatting, data_start_row)
 
-            # 컬럼 너비 자동 조정
-            ExcelExporter._auto_adjust_column_widths(ws, data, headers)
+            # 컬럼 너비 조정 (formatting에 컬럼 너비가 있으면 해당 값 사용, 없으면 자동 조정)
+            if formatting and 'column_widths' in formatting and formatting['column_widths']:
+                # 서식에서 지정한 컬럼 너비 사용 (이미 _apply_formatting에서 적용됨)
+                pass
+            else:
+                # 자동 조정
+                ExcelExporter._auto_adjust_column_widths(ws, data, headers)
 
             # 인쇄 설정 (있는 경우)
             if settings:

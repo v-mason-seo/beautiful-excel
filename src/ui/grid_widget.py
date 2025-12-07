@@ -115,12 +115,14 @@ class GridWidget(QTableWidget):
         Returns:
             dict: {
                 'fonts': {(row, col): {'bold': bool, 'size': int, 'name': str}},
-                'colors': {(row, col): {'bg_color': str}}
+                'colors': {(row, col): {'bg_color': str}},
+                'column_widths': {col_idx: width}
             }
         """
         formatting = {
             'fonts': {},
-            'colors': {}
+            'colors': {},
+            'column_widths': {}
         }
 
         for row in range(self.rowCount()):
@@ -147,6 +149,14 @@ class GridWidget(QTableWidget):
                     formatting['colors'][(row, col)] = {
                         'bg_color': hex_color
                     }
+
+        # 컬럼 너비 정보 추출 (픽셀 -> 엑셀 문자 단위 변환)
+        # 엑셀 컬럼 너비: 1 단위 ≈ 7픽셀 (기본 폰트 기준)
+        for col in range(self.columnCount()):
+            width_px = self.columnWidth(col)
+            # 픽셀을 엑셀 문자 단위로 변환 (대략 1문자 = 7픽셀)
+            width_excel = max(width_px / 7.0, 3)  # 최소 3
+            formatting['column_widths'][col] = width_excel
 
         return formatting
 
@@ -480,10 +490,91 @@ class GridWidget(QTableWidget):
                 # 데이터 행 높이
                 self.setRowHeight(row_idx, height_px)
 
-        # 3. 페이지 분할 정보 표시 (선택사항)
+        # 3. 텍스트 래핑 적용 - 셀 너비를 초과하는 텍스트는 여러 줄로 표시
+        self._apply_text_wrapping()
+
+        # 4. 페이지 분할 정보 표시 (선택사항)
         page_breaks = layout_opt.get('page_breaks', {})
         total_pages = page_breaks.get('total_pages', 1)
         break_points = page_breaks.get('break_points', [])
 
         # 페이지 분할 정보를 시각적으로 표시 (추후 확장 가능)
         # 현재는 로직만 구현하고 실제 표시는 생략
+
+    def _apply_text_wrapping(self):
+        """
+        셀 너비를 초과하는 텍스트를 여러 줄로 표시하고 행 높이 자동 조정
+        """
+        from PySide6.QtGui import QFontMetrics
+
+        # 각 행별 최대 줄 수 추적
+        row_max_lines = {}
+
+        for row in range(self.rowCount()):
+            row_max_lines[row] = 1
+
+            for col in range(self.columnCount()):
+                item = self.item(row, col)
+                if not item:
+                    continue
+
+                text = item.text()
+                if not text:
+                    continue
+
+                # 이미 줄바꿈이 있는 경우 줄 수 계산
+                if '\n' in text:
+                    line_count = text.count('\n') + 1
+                    row_max_lines[row] = max(row_max_lines[row], line_count)
+                    continue
+
+                # 셀 너비와 텍스트 너비 비교
+                col_width = self.columnWidth(col)
+                font = item.font()
+                fm = QFontMetrics(font)
+                text_width = fm.horizontalAdvance(text)
+
+                # 텍스트가 셀 너비의 90%를 초과하면 줄바꿈 적용
+                available_width = col_width - 10  # 여백 고려
+
+                if text_width > available_width and available_width > 0:
+                    # 글자당 평균 너비 계산
+                    char_width = text_width / len(text) if len(text) > 0 else 10
+                    chars_per_line = max(int(available_width / char_width), 1)
+
+                    # 텍스트를 여러 줄로 분할
+                    wrapped_text = self._wrap_text(text, chars_per_line)
+                    item.setText(wrapped_text)
+
+                    # 줄 수 계산
+                    line_count = wrapped_text.count('\n') + 1
+                    row_max_lines[row] = max(row_max_lines[row], line_count)
+
+        # 행 높이 조정
+        base_height = 20  # 기본 행 높이 (픽셀)
+        for row, max_lines in row_max_lines.items():
+            if max_lines > 1:
+                new_height = base_height * max_lines
+                current_height = self.rowHeight(row)
+                if new_height > current_height:
+                    self.setRowHeight(row, new_height)
+
+    def _wrap_text(self, text: str, chars_per_line: int) -> str:
+        """
+        텍스트를 지정된 글자 수마다 줄바꿈
+
+        Args:
+            text: 원본 텍스트
+            chars_per_line: 한 줄당 최대 글자 수
+
+        Returns:
+            str: 줄바꿈된 텍스트
+        """
+        if not text or chars_per_line <= 0:
+            return text
+
+        lines = []
+        for i in range(0, len(text), chars_per_line):
+            lines.append(text[i:i + chars_per_line])
+
+        return '\n'.join(lines)

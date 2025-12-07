@@ -277,10 +277,16 @@ class MainWindow(QMainWindow):
         """
         다른 이름으로 저장
         """
+        import os
+        from pathlib import Path
+
+        # 기본 저장 경로: 사용자 문서 폴더
+        documents_path = str(Path.home() / "Documents")
+
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "엑셀 파일 저장",
-            "",
+            documents_path,
             "Excel Files (*.xlsx);;All Files (*.*)"
         )
 

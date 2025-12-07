@@ -505,40 +505,66 @@ class ExcelOptimizer:
         # 한글은 영문보다 약간 넓음
         char_width_mm = font_size * 0.5  # 대략적인 추정치
 
-        # 각 컬럼별 최대 문자 수 계산
+        # 빈 컬럼 확인 (헤더 제외 데이터가 없는 컬럼)
+        empty_column_indices = set()
+        for col_idx in range(num_columns):
+            if self._is_column_data_empty(data, col_idx):
+                empty_column_indices.add(col_idx)
+
+        # 각 컬럼별 최대 문자 수 계산 (빈 컬럼 제외)
         max_chars_per_column = []
         for col_idx in range(num_columns):
-            # 헤더 길이 고려
-            header_length = len(headers[col_idx]) if col_idx < len(headers) else 0
-            data_max_length = self._get_column_max_length(data, col_idx)
-            max_length = max(header_length, data_max_length)
-            max_chars_per_column.append(max_length)
+            if col_idx in empty_column_indices:
+                # 빈 컬럼은 0으로 설정 (별도 처리)
+                max_chars_per_column.append(0)
+            else:
+                # 헤더 길이 고려
+                header_length = len(headers[col_idx]) if col_idx < len(headers) else 0
+                data_max_length = self._get_column_max_length(data, col_idx)
+                max_length = max(header_length, data_max_length)
+                max_chars_per_column.append(max_length)
 
-        # 전체 문자 수 합계
+        # 빈 컬럼 너비 (mm) - 최소 너비
+        empty_column_width_mm = 10  # 빈 컬럼은 약 10mm (약 38px)
+
+        # 빈 컬럼이 차지하는 총 너비
+        total_empty_width = len(empty_column_indices) * empty_column_width_mm
+
+        # 데이터가 있는 컬럼에 사용할 수 있는 너비
+        available_for_data_columns = available_width - total_empty_width
+
+        # 전체 문자 수 합계 (빈 컬럼 제외)
         total_chars = sum(max_chars_per_column)
 
         # 비율 기반 너비 배분
         column_widths = {}
-        min_width_mm = 20  # 최소 컬럼 너비 (mm)
+        min_width_mm = 20  # 데이터가 있는 컬럼 최소 너비 (mm)
 
         for col_idx, max_chars in enumerate(max_chars_per_column):
-            if total_chars > 0:
+            if col_idx in empty_column_indices:
+                # 빈 컬럼: 최소 너비 적용
+                column_widths[col_idx] = empty_column_width_mm
+            elif total_chars > 0:
                 # 문자 비율에 따라 너비 배분
-                width = (max_chars / total_chars) * available_width
+                width = (max_chars / total_chars) * available_for_data_columns
                 # 최소 너비 보장
                 width = max(width, min_width_mm)
                 column_widths[col_idx] = width
             else:
                 column_widths[col_idx] = min_width_mm
 
-        # 전체 너비가 가용 너비를 초과하는 경우 비율로 축소
+        # 전체 너비가 가용 너비를 초과하는 경우 비율로 축소 (빈 컬럼 제외)
         total_width = sum(column_widths.values())
         if total_width > available_width:
-            scale_factor = available_width / total_width
-            for col_idx in column_widths:
-                column_widths[col_idx] *= scale_factor
-                # 최소 너비 재보장
-                column_widths[col_idx] = max(column_widths[col_idx], min_width_mm)
+            # 빈 컬럼을 제외한 너비만 축소
+            non_empty_width = total_width - total_empty_width
+            if non_empty_width > 0:
+                scale_factor = (available_width - total_empty_width) / non_empty_width
+                for col_idx in column_widths:
+                    if col_idx not in empty_column_indices:
+                        column_widths[col_idx] *= scale_factor
+                        # 최소 너비 재보장
+                        column_widths[col_idx] = max(column_widths[col_idx], min_width_mm)
 
         return column_widths
 
