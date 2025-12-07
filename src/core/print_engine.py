@@ -144,7 +144,7 @@ class PrintEngine:
             resolution = printer.resolution()
             scaled_font_size = int(font_size * resolution / 96)  # 96 DPI 기준 스케일링
             
-            font = QFont("맑은 고딕", scaled_font_size)
+            font = QFont("Courier New", scaled_font_size)
             painter.setFont(font)
 
             # 페이지 영역 계산 (Point 단위 사용)
@@ -168,7 +168,7 @@ class PrintEngine:
             current_y = start_y
 
             # 헤더 그리기
-            header_font = QFont("맑은 고딕", scaled_font_size, QFont.Bold)
+            header_font = QFont("Courier New", scaled_font_size, QFont.Bold)
             painter.setFont(header_font)
             painter.setPen(QPen(QColor(0, 0, 0), 1))
 
@@ -185,7 +185,7 @@ class PrintEngine:
             current_y += row_height
 
             # 데이터 그리기
-            data_font = QFont("맑은 고딕", scaled_font_size)
+            data_font = QFont("Courier New", scaled_font_size)
             painter.setFont(data_font)
 
             for row_idx, row_data in enumerate(data):

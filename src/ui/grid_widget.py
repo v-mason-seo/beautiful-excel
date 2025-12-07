@@ -43,7 +43,7 @@ class GridWidget(QTableWidget):
         self.setShowGrid(True)
 
         # 기본 폰트
-        default_font = QFont("맑은 고딕", 10)
+        default_font = QFont("Courier New", 10)
         self.setFont(default_font)
 
     def set_data(self, data, headers=None):
@@ -135,7 +135,7 @@ class GridWidget(QTableWidget):
                     formatting['fonts'][(row, col)] = {
                         'bold': True,
                         'size': font.pointSize() if font.pointSize() > 0 else 10,
-                        'name': font.family() if font.family() else '맑은 고딕'
+                        'name': font.family() if font.family() else 'Courier New'
                     }
 
                 # 배경색 정보 추출
@@ -187,7 +187,7 @@ class GridWidget(QTableWidget):
         Args:
             font_size: 폰트 크기 (pt)
         """
-        font = QFont("맑은 고딕", font_size)
+        font = QFont("Courier New", font_size)
 
         for row in range(self.rowCount()):
             for col in range(self.columnCount()):
@@ -284,8 +284,8 @@ class GridWidget(QTableWidget):
         if required_cols > self.columnCount():
             self.setColumnCount(required_cols)
 
-        # 데이터 삽입 (Consolas 폰트 적용)
-        paste_font = QFont("Consolas", 10)
+        # 데이터 삽입 (Courier New 폰트 적용)
+        paste_font = QFont("Courier New", 10)
         for row_offset, row_data in enumerate(rows_data):
             for col_offset, cell_value in enumerate(row_data):
                 row_idx = current_row + row_offset
@@ -344,7 +344,7 @@ class GridWidget(QTableWidget):
         폰트 최적화 적용
         """
         font_size = font_opt.get('default_font_size', 10)
-        font_name = font_opt.get('default_font_name', '맑은 고딕')
+        font_name = font_opt.get('default_font_name', 'Courier New')
 
         if font_opt.get('apply_to_all_cells'):
             self.apply_font_size(font_size)

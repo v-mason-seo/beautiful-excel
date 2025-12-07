@@ -93,7 +93,7 @@ class ExcelOptimizer:
             dict: 폰트 최적화 정보
         """
         font_size = self.settings.get('font_size', 10)
-        font_name = '맑은 고딕'
+        font_name = 'Courier New'
 
         return {
             'default_font_size': font_size,

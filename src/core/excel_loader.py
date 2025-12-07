@@ -99,7 +99,7 @@ class ExcelLoader:
                     formatting['fonts'][(row - 1, col - 1)] = {
                         'bold': cell.font.bold if cell.font.bold is not None else False,
                         'size': cell.font.size if cell.font.size is not None else 11,
-                        'name': cell.font.name if cell.font.name else '맑은 고딕',
+                        'name': cell.font.name if cell.font.name else 'Courier New',
                         'color': cell.font.color.rgb if cell.font.color and hasattr(cell.font.color, 'rgb') else None
                     }
 
@@ -198,7 +198,7 @@ class ExcelLoader:
                             formatting['fonts'][(row, col)] = {
                                 'bold': font.bold if hasattr(font, 'bold') else False,
                                 'size': font.height / 20 if hasattr(font, 'height') else 11,  # twips to points
-                                'name': font.name if hasattr(font, 'name') else '맑은 고딕',
+                                'name': font.name if hasattr(font, 'name') else 'Courier New',
                                 'color': None
                             }
                 except:

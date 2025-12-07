@@ -3,7 +3,7 @@
 """
 
 import openpyxl
-from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 from typing import List, Dict, Any, Optional
 
@@ -48,7 +48,15 @@ class ExcelExporter:
 
             # 기본 설정
             default_font_size = 10
-            default_font_name = '맑은 고딕'
+            default_font_name = 'Courier New'
+
+            # 진한 회색 테두리 스타일
+            dark_gray_border = Border(
+                left=Side(style='thin', color='808080'),
+                right=Side(style='thin', color='808080'),
+                top=Side(style='thin', color='808080'),
+                bottom=Side(style='thin', color='808080')
+            )
 
             if settings:
                 default_font_size = settings.get('font_size', 10)
@@ -102,6 +110,8 @@ class ExcelExporter:
                             end_color='C8DCF0',
                             fill_type='solid'
                         )
+                        # 테두리 적용
+                        cell.border = dark_gray_border
                     else:
                         # 일반 데이터 셀
                         cell.font = Font(
@@ -113,6 +123,8 @@ class ExcelExporter:
                             vertical='center',
                             wrap_text=False
                         )
+                        # 테두리 적용
+                        cell.border = dark_gray_border
 
             # 서식 정보 적용 (있는 경우)
             if formatting:
@@ -147,23 +159,25 @@ class ExcelExporter:
             for (row, col), font_info in formatting['fonts'].items():
                 cell = ws.cell(row=row + data_start_row, column=col + 1)
                 cell.font = Font(
-                    name=font_info.get('name', '맑은 고딕'),
+                    name=font_info.get('name', 'Courier New'),
                     size=font_info.get('size', 10),
                     bold=font_info.get('bold', False),
                     color=font_info.get('color')
                 )
 
-        # 색상 서식 적용
+        # 색상 서식 적용 (헤더 행만 적용, 데이터 행은 무시)
         if 'colors' in formatting:
             for (row, col), color_info in formatting['colors'].items():
-                cell = ws.cell(row=row + data_start_row, column=col + 1)
-                bg_color = color_info.get('bg_color')
-                if bg_color:
-                    cell.fill = PatternFill(
-                        start_color=bg_color,
-                        end_color=bg_color,
-                        fill_type='solid'
-                    )
+                # 헤더 행(row 0)만 배경색 적용, 나머지는 무시
+                if row == 0:
+                    cell = ws.cell(row=row + data_start_row, column=col + 1)
+                    bg_color = color_info.get('bg_color')
+                    if bg_color and bg_color != '000000':  # 검정색 제외
+                        cell.fill = PatternFill(
+                            start_color=bg_color,
+                            end_color=bg_color,
+                            fill_type='solid'
+                        )
 
         # 컬럼 너비 적용
         if 'column_widths' in formatting:
