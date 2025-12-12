@@ -57,6 +57,9 @@ class MainWindow(QMainWindow):
         self.grid_widget = GridWidget()
         layout.addWidget(self.grid_widget)
 
+        # 액션 생성 (메뉴와 툴바에서 공유)
+        self.create_actions()
+
         # 메뉴바 생성
         self.create_menu_bar()
 
@@ -68,6 +71,60 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status_bar)
         self.update_status("준비")
 
+    def create_actions(self):
+        """
+        액션 생성 (메뉴와 툴바에서 공유)
+        """
+        # 파일 열기
+        self.open_action = QAction("열기(&O)", self)
+        self.open_action.setShortcut("Ctrl+O")
+        self.open_action.setToolTip("엑셀 파일 열기 (Ctrl+O)")
+        self.open_action.triggered.connect(self.open_file)
+
+        # 저장
+        self.save_action = QAction("저장(&S)", self)
+        self.save_action.setShortcut("Ctrl+S")
+        self.save_action.setToolTip("파일 저장 (Ctrl+S)")
+        self.save_action.triggered.connect(self.save_file)
+
+        # 다른 이름으로 저장
+        self.save_as_action = QAction("다른 이름으로 저장(&A)", self)
+        self.save_as_action.setShortcut("Ctrl+Shift+S")
+        self.save_as_action.setToolTip("다른 이름으로 저장 (Ctrl+Shift+S)")
+        self.save_as_action.triggered.connect(self.save_file_as)
+
+        # 종료
+        self.exit_action = QAction("종료(&X)", self)
+        self.exit_action.setShortcut("Ctrl+Q")
+        self.exit_action.triggered.connect(self.close)
+
+        # 붙여넣기
+        self.paste_action = QAction("붙여넣기(&V)", self)
+        self.paste_action.setShortcut("Ctrl+V")
+        self.paste_action.setToolTip("클립보드 데이터 붙여넣기 (Ctrl+V)")
+        self.paste_action.triggered.connect(self.paste_data)
+
+        # 모두 지우기
+        self.clear_action = QAction("모두 지우기(&C)", self)
+        self.clear_action.setToolTip("그리드 데이터 모두 삭제")
+        self.clear_action.triggered.connect(self.clear_all)
+
+        # 인쇄 미리보기
+        self.preview_action = QAction("인쇄 미리보기", self)
+        self.preview_action.setShortcut("Ctrl+Shift+P")
+        self.preview_action.setToolTip("인쇄 미리보기 (Ctrl+Shift+P)")
+        self.preview_action.triggered.connect(self.print_preview)
+
+        # 인쇄
+        self.print_action = QAction("인쇄", self)
+        self.print_action.setShortcut("Ctrl+P")
+        self.print_action.setToolTip("인쇄 (Ctrl+P)")
+        self.print_action.triggered.connect(self.print_document)
+
+        # 프로그램 정보
+        self.about_action = QAction("프로그램 정보(&A)", self)
+        self.about_action.triggered.connect(self.show_about)
+
     def create_menu_bar(self):
         """
         메뉴바 생성
@@ -76,54 +133,20 @@ class MainWindow(QMainWindow):
 
         # 파일 메뉴
         file_menu = menubar.addMenu("파일(&F)")
-
-        # 열기
-        open_action = QAction("열기(&O)", self)
-        open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self.open_file)
-        file_menu.addAction(open_action)
-
-        # 저장
-        save_action = QAction("저장(&S)", self)
-        save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self.save_file)
-        file_menu.addAction(save_action)
-
-        # 다른 이름으로 저장
-        save_as_action = QAction("다른 이름으로 저장(&A)", self)
-        save_as_action.setShortcut("Ctrl+Shift+S")
-        save_as_action.triggered.connect(self.save_file_as)
-        file_menu.addAction(save_as_action)
-
+        file_menu.addAction(self.open_action)
+        file_menu.addAction(self.save_action)
+        file_menu.addAction(self.save_as_action)
         file_menu.addSeparator()
-
-        # 종료
-        exit_action = QAction("종료(&X)", self)
-        exit_action.setShortcut("Ctrl+Q")
-        exit_action.triggered.connect(self.close)
-        file_menu.addAction(exit_action)
+        file_menu.addAction(self.exit_action)
 
         # 편집 메뉴
         edit_menu = menubar.addMenu("편집(&E)")
-
-        # 붙여넣기
-        paste_action = QAction("붙여넣기(&V)", self)
-        paste_action.setShortcut("Ctrl+V")
-        paste_action.triggered.connect(self.paste_data)
-        edit_menu.addAction(paste_action)
-
-        # 모두 지우기
-        clear_action = QAction("모두 지우기(&C)", self)
-        clear_action.triggered.connect(self.clear_all)
-        edit_menu.addAction(clear_action)
+        edit_menu.addAction(self.paste_action)
+        edit_menu.addAction(self.clear_action)
 
         # 도움말 메뉴
         help_menu = menubar.addMenu("도움말(&H)")
-
-        # 프로그램 정보
-        about_action = QAction("프로그램 정보(&A)", self)
-        about_action.triggered.connect(self.show_about)
-        help_menu.addAction(about_action)
+        help_menu.addAction(self.about_action)
 
     def create_toolbar(self):
         """
@@ -133,57 +156,16 @@ class MainWindow(QMainWindow):
         toolbar.setMovable(False)
         self.addToolBar(toolbar)
 
-        # 파일 열기
-        open_action = QAction("열기", self)
-        open_action.setShortcut("Ctrl+O")
-        open_action.setToolTip("엑셀 파일 열기 (Ctrl+O)")
-        open_action.triggered.connect(self.open_file)
-        toolbar.addAction(open_action)
-
-        # 저장
-        save_action = QAction("저장", self)
-        save_action.setShortcut("Ctrl+S")
-        save_action.setToolTip("파일 저장 (Ctrl+S)")
-        save_action.triggered.connect(self.save_file)
-        toolbar.addAction(save_action)
-
-        # 다른 이름으로 저장
-        save_as_action = QAction("다른 이름으로 저장", self)
-        save_as_action.setShortcut("Ctrl+Shift+S")
-        save_as_action.setToolTip("다른 이름으로 저장 (Ctrl+Shift+S)")
-        save_as_action.triggered.connect(self.save_file_as)
-        toolbar.addAction(save_as_action)
-
+        # 액션 추가
+        toolbar.addAction(self.open_action)
+        toolbar.addAction(self.save_action)
+        toolbar.addAction(self.save_as_action)
         toolbar.addSeparator()
-
-        # 붙여넣기
-        paste_action = QAction("붙여넣기", self)
-        paste_action.setShortcut("Ctrl+V")
-        paste_action.setToolTip("클립보드 데이터 붙여넣기 (Ctrl+V)")
-        paste_action.triggered.connect(self.paste_data)
-        toolbar.addAction(paste_action)
-
-        # 모두 지우기
-        clear_action = QAction("모두 지우기", self)
-        clear_action.setToolTip("그리드 데이터 모두 삭제")
-        clear_action.triggered.connect(self.clear_all)
-        toolbar.addAction(clear_action)
-
+        toolbar.addAction(self.paste_action)
+        toolbar.addAction(self.clear_action)
         toolbar.addSeparator()
-
-        # 인쇄 미리보기
-        preview_action = QAction("인쇄 미리보기", self)
-        preview_action.setShortcut("Ctrl+Shift+P")
-        preview_action.setToolTip("인쇄 미리보기 (Ctrl+Shift+P)")
-        preview_action.triggered.connect(self.print_preview)
-        toolbar.addAction(preview_action)
-
-        # 인쇄
-        print_action = QAction("인쇄", self)
-        print_action.setShortcut("Ctrl+P")
-        print_action.setToolTip("인쇄 (Ctrl+P)")
-        print_action.triggered.connect(self.print_document)
-        toolbar.addAction(print_action)
+        toolbar.addAction(self.preview_action)
+        toolbar.addAction(self.print_action)
 
     def open_file(self):
         """

@@ -107,7 +107,9 @@ class ExcelOptimizer:
         headers: List[str]
     ) -> Dict[str, Any]:
         """
-        빈 컬럼 최적화 (헤더를 제외한 데이터가 모두 비어있는 컬럼)
+        빈 컬럼 및 짧은 데이터 컬럼 최적화
+        - 헤더를 제외한 데이터가 모두 비어있는 컬럼
+        - 헤더를 제외한 셀의 최대 글자수가 5자 이하인 컬럼
 
         Args:
             data: 데이터 리스트 (첫 번째 행이 헤더)
@@ -115,7 +117,7 @@ class ExcelOptimizer:
 
         Returns:
             dict: {
-                'empty_columns': {컬럼_인덱스: {'is_empty': bool, 'header_wrap': 줄바꿈된 헤더}},
+                'empty_columns': {컬럼_인덱스: {'is_empty': bool, 'is_short': bool, 'header_wrap': 줄바꿈된 헤더}},
                 'column_widths': {컬럼_인덱스: 너비}
             }
         """
@@ -125,20 +127,26 @@ class ExcelOptimizer:
         num_columns = len(headers)
         empty_columns = {}
         column_widths = {}
+        
+        # 짧은 데이터 기준 (5자 이하)
+        SHORT_DATA_THRESHOLD = 5
 
         for col_idx in range(num_columns):
             # 헤더를 제외한 데이터가 모두 비어있는지 확인
             is_column_empty = self._is_column_data_empty(data, col_idx)
+            
+            # 헤더를 제외한 데이터의 최대 글자수 계산
+            max_data_length = self._get_column_max_length_excluding_header(data, col_idx)
+            is_short_data = not is_column_empty and max_data_length <= SHORT_DATA_THRESHOLD
 
             if is_column_empty:
-                # 헤더 텍스트 가져오기
+                # 빈 컬럼: 기존 로직 유지
                 header_text = headers[col_idx] if col_idx < len(headers) else ''
-
-                # 헤더를 여러 줄로 변환 (2~3글자마다 줄바꿈)
                 wrapped_header = self._wrap_header_text(header_text, max_chars_per_line=3)
 
                 empty_columns[col_idx] = {
                     'is_empty': True,
+                    'is_short': False,
                     'header_wrap': wrapped_header,
                     'original_header': header_text,
                     'reason': '데이터 없음'
@@ -146,11 +154,36 @@ class ExcelOptimizer:
 
                 # 컬럼 너비 최소화 (픽셀 단위)
                 column_widths[col_idx] = 40  # 최소 너비
+                
+            elif is_short_data:
+                # 짧은 데이터 컬럼: 헤더를 여러 줄로 표시하고 셀 값에 맞춰 너비 조정
+                header_text = headers[col_idx] if col_idx < len(headers) else ''
+                
+                # 헤더 길이가 데이터 최대 길이보다 긴 경우에만 줄바꿈 적용
+                if len(header_text) > max_data_length:
+                    # 데이터 길이에 맞춰 줄바꿈 (데이터 길이를 기준으로)
+                    chars_per_line = max(max_data_length, 2)  # 최소 2글자
+                    wrapped_header = self._wrap_header_text(header_text, max_chars_per_line=chars_per_line)
+                else:
+                    wrapped_header = header_text
+
+                empty_columns[col_idx] = {
+                    'is_empty': False,
+                    'is_short': True,
+                    'header_wrap': wrapped_header,
+                    'original_header': header_text,
+                    'max_data_length': max_data_length,
+                    'reason': f'짧은 데이터 ({max_data_length}자 이하)'
+                }
+
+                # 셀 값의 너비에 맞춰 컬럼 너비 설정 (픽셀 단위)
+                # 한글 기준 글자당 약 15픽셀, 최소 40픽셀
+                column_widths[col_idx] = max(max_data_length * 15, 40)
+                
             else:
-                # 데이터 길이 기반 너비 계산
-                max_length = self._get_column_max_length(data, col_idx)
+                # 일반 컬럼: 데이터 길이 기반 너비 계산
                 header_length = len(headers[col_idx]) if col_idx < len(headers) else 0
-                max_length = max(max_length, header_length)
+                max_length = max(max_data_length, header_length)
 
                 # 한글은 더 넓은 공간 필요 (픽셀 단위)
                 column_widths[col_idx] = min(max(max_length * 10, 80), 300)
@@ -159,6 +192,29 @@ class ExcelOptimizer:
             'empty_columns': empty_columns,
             'column_widths': column_widths
         }
+    
+    @staticmethod
+    def _get_column_max_length_excluding_header(data: List[List[str]], col_index: int) -> int:
+        """
+        헤더(첫 번째 행)를 제외한 컬럼 데이터의 최대 문자 길이
+
+        Args:
+            data: 데이터 리스트 (첫 번째 행이 헤더)
+            col_index: 컬럼 인덱스
+
+        Returns:
+            int: 최대 문자 길이
+        """
+        max_length = 0
+
+        # 첫 번째 행(헤더)을 제외한 나머지 데이터 확인
+        for row in data[1:]:
+            if col_index < len(row):
+                cell_value = row[col_index]
+                if cell_value:
+                    max_length = max(max_length, len(str(cell_value)))
+
+        return max_length
 
     def _optimize_bold_text(
         self,

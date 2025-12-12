@@ -361,17 +361,18 @@ class GridWidget(QTableWidget):
 
     def _apply_empty_cell_optimization(self, empty_cell_opt):
         """
-        빈 컬럼 최적화 적용 (데이터가 없는 컬럼)
+        빈 컬럼 및 짧은 데이터 컬럼 최적화 적용
         - 헤더를 여러 줄로 표시
         - 행 높이 자동 조정
-        - 컬럼 너비 최소화
-        - 헤더 제외 셀 배경색 제거
+        - 컬럼 너비 조정
+        - 빈 컬럼의 경우 헤더 제외 셀 배경색 제거
         """
         empty_columns = empty_cell_opt.get('empty_columns', {})
         max_lines = 1  # 최대 줄 수 추적
 
         for col_idx, col_info in empty_columns.items():
-            if col_info.get('is_empty'):
+            # 빈 컬럼 또는 짧은 데이터 컬럼 처리
+            if col_info.get('is_empty') or col_info.get('is_short'):
                 # 줄바꿈된 헤더 텍스트 가져오기
                 wrapped_header = col_info.get('header_wrap', '')
 
@@ -386,11 +387,12 @@ class GridWidget(QTableWidget):
                 line_count = wrapped_header.count('\n') + 1
                 max_lines = max(max_lines, line_count)
 
-                # 헤더 제외한 셀 배경색 제거 (채우기 없음)
-                for row_idx in range(1, self.rowCount()):
-                    cell_item = self.item(row_idx, col_idx)
-                    if cell_item:
-                        cell_item.setBackground(QBrush())  # 채우기 없음
+                # 빈 컬럼의 경우에만 헤더 제외한 셀 배경색 제거 (채우기 없음)
+                if col_info.get('is_empty'):
+                    for row_idx in range(1, self.rowCount()):
+                        cell_item = self.item(row_idx, col_idx)
+                        if cell_item:
+                            cell_item.setBackground(QBrush())  # 채우기 없음
 
         # 컬럼 너비 조정
         column_widths = empty_cell_opt.get('column_widths', {})
