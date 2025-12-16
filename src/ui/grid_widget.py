@@ -162,11 +162,21 @@ class GridWidget(QTableWidget):
 
     def clear_all(self):
         """
-        그리드의 모든 데이터 삭제
+        그리드의 모든 데이터 삭제 및 초기 상태로 복원
         """
         self.clearContents()
         self.setRowCount(20)
         self.setColumnCount(10)
+
+        # 행 높이 초기화 (기본값: 30픽셀)
+        default_row_height = 30
+        for row in range(self.rowCount()):
+            self.setRowHeight(row, default_row_height)
+
+        # 컬럼 너비 초기화 (기본값: 100픽셀)
+        default_col_width = 100
+        for col in range(self.columnCount()):
+            self.setColumnWidth(col, default_col_width)
 
     def apply_header_row_style(self):
         """
