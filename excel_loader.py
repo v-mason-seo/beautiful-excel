@@ -27,8 +27,6 @@ class ExcelLoader:
         반환 형태: {시트명: [[행데이터], ...]}
         헤더 포함 전체 UsedRange를 읽음.
         """
-        import os
-        filepath = os.path.abspath(filepath)
         self._ensure_excel()
         wb = self._excel.Workbooks.Open(filepath)
         result = {}

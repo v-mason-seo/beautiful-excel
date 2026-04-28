@@ -9,10 +9,12 @@ CLR_HEADER = "#343A56"
 CLR_ROW_ALT = "#F8F9FC"
 CLR_BORDER = "#E0E4EF"
 
+TEMPLATE_DIR = r"C:\sr_templates"
+
 EXCEL_MAP = {
-    "SG/IGWFW": r"templates\sg_igwfw.xlsx",
-    "VM": r"templates\vm.xlsx",
-    "LB": r"templates\lb.xlsx",
+    "SG/IGWFW": rf"{TEMPLATE_DIR}\sg_igwfw.xlsx",
+    "VM": rf"{TEMPLATE_DIR}\vm.xlsx",
+    "LB": rf"{TEMPLATE_DIR}\lb.xlsx",
 }
 
 CATEGORIES = list(EXCEL_MAP.keys())
