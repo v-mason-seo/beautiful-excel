@@ -2,7 +2,6 @@ from PySide6.QtWidgets import (
     QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QApplication,
 )
 from PySide6.QtGui import QKeySequence
-from constants import CLR_CARD, CLR_SIDEBAR, CLR_ROW_ALT
 
 
 class PasteableTable(QTableWidget):
@@ -10,36 +9,12 @@ class PasteableTable(QTableWidget):
 
     def __init__(self, parent=None):
         super().__init__(0, 0, parent)
-        self._apply_style()
-
-    def _apply_style(self):
         self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setAlternatingRowColors(True)
         self.verticalHeader().setVisible(False)
         self.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.horizontalHeader().setStretchLastSection(True)
-        self.setStyleSheet(f"""
-            QTableWidget {{
-                background-color: {CLR_CARD};
-                gridline-color: #E0E4EF;
-                border: none;
-            }}
-            QTableWidget::item:selected {{
-                background-color: #D0E4FF;
-                color: #1E2235;
-            }}
-            QHeaderView::section {{
-                background-color: {CLR_SIDEBAR};
-                color: #FFFFFF;
-                padding: 6px 8px;
-                border: none;
-                font-weight: bold;
-            }}
-            QTableWidget::item:alternate {{
-                background-color: {CLR_ROW_ALT};
-            }}
-        """)
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.StandardKey.Paste):

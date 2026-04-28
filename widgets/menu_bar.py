@@ -21,22 +21,6 @@ class MenuBar(QWidget):
         self.combo = QComboBox()
         self.combo.addItems(CATEGORIES)
         self.combo.setFixedWidth(160)
-        self.combo.setStyleSheet("""
-            QComboBox {
-                background-color: rgba(255,255,255,0.1);
-                color: #FFFFFF;
-                border: 1px solid rgba(255,255,255,0.2);
-                border-radius: 4px;
-                padding: 4px 8px;
-                font-size: 13px;
-            }
-            QComboBox::drop-down { border: none; }
-            QComboBox QAbstractItemView {
-                background-color: #2C3455;
-                color: #FFFFFF;
-                selection-background-color: rgba(255,255,255,0.15);
-            }
-        """)
         self.combo.currentTextChanged.connect(self.category_changed)
         layout.addWidget(self.combo)
         layout.addStretch()

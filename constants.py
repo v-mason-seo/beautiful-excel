@@ -12,7 +12,8 @@ CLR_BORDER = "#E0E4EF"
 TEMPLATE_DIR = r"C:\sr_templates"
 
 EXCEL_MAP = {
-    "SG/IGWFW": rf"{TEMPLATE_DIR}\sg_igwfw.xlsx",
+    "SG": rf"{TEMPLATE_DIR}\sg.xlsx",
+    "IGWFW": rf"{TEMPLATE_DIR}\igwfw.xlsx",
     "VM": rf"{TEMPLATE_DIR}\vm.xlsx",
     "LB": rf"{TEMPLATE_DIR}\lb.xlsx",
 }
