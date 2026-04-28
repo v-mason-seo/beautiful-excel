@@ -1,0 +1,44 @@
+{
+  "SG": {
+    "ServerName": ["서버명", "HOST NAME", "Server Name", "호스트명", "HOSTNAME", "서버 명", "장비명"],
+    "IP": ["IP", "IP Address", "IP주소", "아이피", "IP 주소", "관리IP", "서비스IP"],
+    "OS": ["OS", "운영체제", "Operating System", "OS 종류", "OS종류"],
+    "CPU": ["CPU", "CPU 수", "Core", "vCPU", "코어수", "CPU Core"],
+    "Memory": ["Memory", "메모리", "RAM", "MEM", "메모리(GB)", "메모리 용량"],
+    "Disk": ["Disk", "디스크", "Storage", "HDD", "SSD", "용량", "디스크 용량"],
+    "Zone": ["Zone", "존", "가용영역", "AZ", "위치"],
+    "Rack": ["Rack", "랙", "Rack No", "랙번호"],
+    "Purpose": ["Purpose", "용도", "서버용도", "역할", "Role"],
+    "Remark": ["Remark", "비고", "Note", "Notes", "메모"]
+  },
+  "IGWFW": {
+    "ServerName": ["서버명", "HOST NAME", "방화벽명", "장비명"],
+    "SrcIP": ["SrcIP", "출발지IP", "Source IP", "출발지", "Src"],
+    "DstIP": ["DstIP", "목적지IP", "Destination IP", "목적지", "Dst"],
+    "Port": ["Port", "포트", "PORT", "서비스 포트", "Dst Port", "목적지 포트"],
+    "Protocol": ["Protocol", "프로토콜", "PROTO", "Proto"],
+    "Action": ["Action", "동작", "정책", "허용/차단", "Allow/Deny"],
+    "Zone": ["Zone", "존", "대역", "구간"],
+    "Remark": ["Remark", "비고", "Note", "Notes", "메모"]
+  },
+  "VM": {
+    "VMName": ["VM명", "VM Name", "가상머신명", "VM", "인스턴스명", "Instance Name"],
+    "vCPU": ["vCPU", "CPU", "Core 수", "CPU Core", "코어"],
+    "Memory": ["Memory", "메모리", "RAM", "MEM", "메모리(GB)"],
+    "Disk": ["Disk", "디스크", "용량", "Storage", "Root Disk"],
+    "OS": ["OS", "운영체제", "OS 종류", "이미지"],
+    "IP": ["IP", "IP Address", "IP주소", "사설IP"],
+    "Subnet": ["Subnet", "서브넷", "CIDR", "네트워크"],
+    "Remark": ["Remark", "비고", "Note", "Notes", "메모"]
+  },
+  "LB": {
+    "VIP": ["VIP", "Virtual IP", "가상IP", "서비스IP"],
+    "VPort": ["VPort", "Virtual Port", "서비스포트", "VIP Port"],
+    "Protocol": ["Protocol", "프로토콜", "PROTO"],
+    "RealServer": ["Real Server", "리얼서버", "RS", "백엔드", "Backend", "서버IP"],
+    "RPort": ["RPort", "Real Port", "리얼포트", "서버포트"],
+    "Method": ["Method", "분산방식", "알고리즘", "LB Method", "Round Robin"],
+    "Health": ["Health", "헬스체크", "Health Check", "상태확인"],
+    "Remark": ["Remark", "비고", "Note", "Notes", "메모"]
+  }
+}

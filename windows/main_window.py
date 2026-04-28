@@ -3,6 +3,7 @@ from widgets.sidebar import Sidebar
 from widgets.sr_page import SRPage
 from widgets.history_page import HistoryPage
 from excel_loader import ExcelLoader
+from config.app_config import AppConfig
 
 
 class MainWindow(QMainWindow):
@@ -13,6 +14,7 @@ class MainWindow(QMainWindow):
         self._center()
 
         self._loader = ExcelLoader()
+        self._app_config = AppConfig()
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -31,7 +33,7 @@ class MainWindow(QMainWindow):
         self._stack = QStackedWidget()
         layout.addWidget(self._stack)
 
-        self._sr_page = SRPage(self._loader)
+        self._sr_page = SRPage(self._loader, self._app_config)
         self._history_page = HistoryPage()
         self._stack.addWidget(self._sr_page)      # index 0
         self._stack.addWidget(self._history_page)  # index 1
