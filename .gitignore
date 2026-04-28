@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.easyocr/
+*.xlsx
+*.xls
+.env
+*.log
